@@ -4,11 +4,12 @@ from gensim.models.phrases import Phrases, Phraser
 import spacy
 import string
 from nltk.corpus import stopwords, words
-import nltk
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 import os
 
 # download external dicts
+# import nltk
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 # nltk.download('words')
