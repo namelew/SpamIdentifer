@@ -4,3 +4,4 @@ sklearn
 gensim
 spacy
 nltk
+validators

@@ -4,7 +4,7 @@ from gensim.models.phrases import Phrases, Phraser
 import spacy
 import string
 from nltk.corpus import stopwords, words
-
+from validators import url
 from sklearn.feature_extraction.text import TfidfVectorizer
 import os
 
@@ -21,26 +21,26 @@ EXCLUDE:set = set(string.punctuation)
 nlp = spacy.load('en_core_web_md')    
 
 # removing garbage
-def clean(doc:str) -> str:
-    stop_free = " ".join([w for w in doc.lower().split() if w not in STOP])
-    punc_free = ''.join(ch for ch in stop_free if ch not in EXCLUDE)
-    t_words = " ".join(ch for ch in punc_free if ch.lower() in WORDS)
+def clean(doc):
+    stop_free = " ".join([w for w in doc.lower().split() if w not in STOP and len(w) < 15])
+    punc_free=''
+    for w in stop_free:
+      if w in EXCLUDE:
+        w=' '
+      punc_free += w
+    t_words = " ".join([w for w in doc.lower().split() if w in WORDS or url(w)])
     return t_words
 
 # load source files
 def load_source() -> tuple[list[str],list[int]]:
     FPATH='./source/'
     spams=[]
-
-    file = open(FPATH+'trainX.txt', "r", encoding='utf-8')
-    for email in file.readlines():
+    with open(FPATH+'trainX.txt', "r", encoding='utf-8') as emails:
+        for email in emails:
             spams.append(clean(email))
-    file.close()
-
-    file = open(FPATH+'testX.txt', "r", encoding='utf-8')
-    for email in file.readlines():
+    with open(FPATH+'testX.txt', "r", encoding='utf-8') as emails:
+        for email in emails:
             spams.append(clean(email))
-    file.close()
 
     spams = [gensim.utils.simple_preprocess(spam, deacc= True, min_len=5) for spam in spams] # removing smallest words
 
@@ -54,19 +54,16 @@ def load_source() -> tuple[list[str],list[int]]:
         tokens_spam = nlp(d)
         lemma=" ".join([token.lemma_ for token in tokens_spam])
         temp.append(lemma)
-    spams = temp.copy()
+        news = temp.copy()
 
     # load labels
     lspam=[]
-    file = open(FPATH+'trainy.txt', "r", encoding='utf-8')
-    for label in file.readlines(): 
-        lspam.append(int(label))
-    file.close()
-
-    file = open(FPATH+'testy.txt', "r", encoding='utf-8')
-    for label in file.readlines(): 
-        lspam.append(int(label))
-    file.close()
+    with open(FPATH+'trainy.txt', "r", encoding='utf-8') as f:
+        for l in f:
+            lspam.append(int(l))
+    with open(FPATH+'testy.txt', "r", encoding='utf-8') as f:
+        for l in f:
+            lspam.append(int(l))
     
     return spams,lspam
 
